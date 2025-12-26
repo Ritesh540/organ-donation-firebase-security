@@ -1,0 +1,31 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.role == "admin";
+    }
+
+    /* Medical Reports Upload */
+    match /medical_reports/{userId}/{fileName} {
+      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isAdmin();
+    }
+
+    /* Hospital Documents */
+    match /hospital_docs/{hospitalId}/{fileName} {
+      allow write: if isSignedIn() && request.auth.uid == hospitalId;
+      allow read: if isAdmin();
+    }
+
+    /* DENY EVERYTHING ELSE */
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
